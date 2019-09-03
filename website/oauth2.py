@@ -37,9 +37,9 @@ def generate_user_info(user, scope):
 
 
 def create_authorization_code(client, grant_user, request):
-    code = generate_token(48)
+    code = gen_salt(48)
     nonce = request.data.get('nonce')
-    item = AuthorizationCode(
+    item = OAuth2AuthorizationCode(
         code=code,
         client_id=client.client_id,
         redirect_uri=request.redirect_uri,
@@ -121,7 +121,7 @@ def config_oauth(app):
 
     # support all openid grants
     authorization.register_grant(AuthorizationCodeGrant, [
-        OpenIDCodeGrant(require_nonce=True),
+        OpenIDCode(required_nonce=True),
     ])
     authorization.register_grant(ImplicitGrant)
     authorization.register_grant(HybridGrant)
