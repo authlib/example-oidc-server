@@ -37,12 +37,8 @@ def home():
     return render_template('home.html', user=user, clients=clients)
 
 
-def split_by_crlf(val:str):
-    return [
-        item for item in
-        [item.strip() for item in val.split('\r\n')]
-        if item != ''
-    ]
+def split_by_crlf(s):
+    return [v for v in s.splitlines() if v]
 
 
 @bp.route('/create_client', methods=('GET', 'POST'))
