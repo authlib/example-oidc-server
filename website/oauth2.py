@@ -1,5 +1,6 @@
-from authlib.flask.oauth2 import AuthorizationServer, ResourceProtector
-from authlib.flask.oauth2.sqla import (
+from authlib.integrations.flask_oauth2 import (
+    AuthorizationServer, ResourceProtector)
+from authlib.integrations.sqla_oauth2 import (
     create_query_client_func,
     create_save_token_func,
     create_bearer_token_validator,
@@ -121,7 +122,7 @@ def config_oauth(app):
 
     # support all openid grants
     authorization.register_grant(AuthorizationCodeGrant, [
-        OpenIDCode(required_nonce=True),
+        OpenIDCode(require_nonce=True),
     ])
     authorization.register_grant(ImplicitGrant)
     authorization.register_grant(HybridGrant)

@@ -1,7 +1,7 @@
 from flask import Blueprint, request, session
 from flask import render_template, redirect, jsonify
 from werkzeug.security import gen_salt
-from authlib.flask.oauth2 import current_token
+from authlib.integrations.flask_oauth2 import current_token
 from authlib.oauth2 import OAuth2Error
 from .models import db, User, OAuth2Client
 from .oauth2 import authorization, require_oauth
