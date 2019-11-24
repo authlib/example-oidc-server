@@ -1,4 +1,4 @@
-import datetime
+import time
 from flask import Blueprint, request, session
 from flask import render_template, redirect, jsonify
 from werkzeug.security import gen_salt
@@ -44,6 +44,7 @@ def split_by_crlf(val:str):
         if item != ''
     ]
 
+
 @bp.route('/create_client', methods=('GET', 'POST'))
 def create_client():
     user = current_user()
@@ -52,11 +53,10 @@ def create_client():
     if request.method == 'GET':
         return render_template('create_client.html')
     form = request.form
-    client = OAuth2Client()
-    client.user_id = user.id
-    client.client_id = gen_salt(24)
+    client_id = gen_salt(24)
+    client = OAuth2Client(client_id=client_id, user_id=user.id)
     # Mixin doesn't set the issue_at date
-    client.client_id_issued_at = datetime.datetime.now().timestamp()
+    client.client_id_issued_at = int(time.time())
     if client.token_endpoint_auth_method == 'none':
         client.client_secret = ''
     else:
