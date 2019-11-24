@@ -1,7 +1,8 @@
+import datetime
 from flask import Blueprint, request, session
 from flask import render_template, redirect, jsonify
 from werkzeug.security import gen_salt
-from authlib.flask.oauth2 import current_token
+from authlib.integrations.flask_oauth2 import current_token
 from authlib.oauth2 import OAuth2Error
 from .models import db, User, OAuth2Client
 from .oauth2 import authorization, require_oauth
@@ -36,6 +37,13 @@ def home():
     return render_template('home.html', user=user, clients=clients)
 
 
+def split_by_crlf(val:str):
+    return [
+        item for item in
+        [item.strip() for item in val.split('\r\n')]
+        if item != ''
+    ]
+
 @bp.route('/create_client', methods=('GET', 'POST'))
 def create_client():
     user = current_user()
@@ -43,13 +51,27 @@ def create_client():
         return redirect('/')
     if request.method == 'GET':
         return render_template('create_client.html')
-    client = OAuth2Client(**request.form.to_dict(flat=True))
+    form = request.form
+    client = OAuth2Client()
     client.user_id = user.id
     client.client_id = gen_salt(24)
+    # Mixin doesn't set the issue_at date
+    client.client_id_issued_at = datetime.datetime.now().timestamp()
     if client.token_endpoint_auth_method == 'none':
         client.client_secret = ''
     else:
         client.client_secret = gen_salt(48)
+
+    client_metadata = {
+        "client_name": form["client_name"],
+        "client_uri": form["client_uri"],
+        "grant_types": split_by_crlf(form["grant_type"]),
+        "redirect_uris": split_by_crlf(form["redirect_uri"]),
+        "response_types": split_by_crlf(form["response_type"]),
+        "scope": form["scope"],
+        "token_endpoint_auth_method": form["token_endpoint_auth_method"]
+    }
+    client.set_client_metadata(client_metadata)
     db.session.add(client)
     db.session.commit()
     return redirect('/')

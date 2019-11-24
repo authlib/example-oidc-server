@@ -1,8 +1,8 @@
 from flask_sqlalchemy import SQLAlchemy
-from authlib.flask.oauth2.sqla import (
+from authlib.integrations.sqla_oauth2 import (
     OAuth2ClientMixin,
     OAuth2TokenMixin,
-    OIDCAuthorizationCodeMixin,
+    OAuth2AuthorizationCodeMixin
 )
 
 db = SQLAlchemy()
@@ -28,7 +28,7 @@ class OAuth2Client(db.Model, OAuth2ClientMixin):
     user = db.relationship('User')
 
 
-class OAuth2AuthorizationCode(db.Model, OIDCAuthorizationCodeMixin):
+class OAuth2AuthorizationCode(db.Model, OAuth2AuthorizationCodeMixin):
     __tablename__ = 'oauth2_code'
 
     id = db.Column(db.Integer, primary_key=True)
