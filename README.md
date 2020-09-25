@@ -50,3 +50,9 @@ Copy the code value, use `curl` to get the access token:
 ```
 curl -u "${CLIENT_ID}:${CLIENT_SECRET}" -XPOST http://127.0.0.1:5000/oauth/token -F grant_type=authorization_code -F code=RSv6j745Ri0DhBSvi2RQu5JKpIVvLm8SFd5ObjOZZSijohe0
 ```
+
+Now you can access the userinfo endpoint:
+
+```bash
+$ curl -H "Authorization: Bearer ${access_token}" http://127.0.0.1:5000/oauth/userinfo
+```

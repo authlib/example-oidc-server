@@ -5,7 +5,7 @@ from werkzeug.security import gen_salt
 from authlib.integrations.flask_oauth2 import current_token
 from authlib.oauth2 import OAuth2Error
 from .models import db, User, OAuth2Client
-from .oauth2 import authorization, require_oauth
+from .oauth2 import authorization, require_oauth, generate_user_info
 
 
 bp = Blueprint(__name__, 'home')
@@ -97,8 +97,7 @@ def issue_token():
     return authorization.create_token_response()
 
 
-@bp.route('/api/me')
+@bp.route('/oauth/userinfo')
 @require_oauth('profile')
 def api_me():
-    user = current_token.user
-    return jsonify(id=user.id, username=user.username)
+    return jsonify(generate_user_info(current_token.user, current_token.scope))
