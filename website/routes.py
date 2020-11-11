@@ -5,7 +5,7 @@ from werkzeug.security import gen_salt
 from authlib.integrations.flask_oauth2 import current_token
 from authlib.oauth2 import OAuth2Error
 from .models import db, User, OAuth2Client
-from .oauth2 import authorization, require_oauth
+from .oauth2 import authorization, require_oauth, generate_user_info
 
 
 bp = Blueprint(__name__, 'home')
@@ -39,6 +39,22 @@ def home():
 
 def split_by_crlf(s):
     return [v for v in s.splitlines() if v]
+
+@bp.route('/edit_user', methods=('GET', 'POST'))
+def edit_user():
+    user = current_user()
+    if not user:
+        return redirect('/')
+
+    if request.method == 'GET':
+        return render_template('edit_user.html', user=user)
+
+    form = request.form
+    user.name = form['name']
+    user.email = form['email']
+
+    db.session.commit()
+    return redirect('/')
 
 
 @bp.route('/create_client', methods=('GET', 'POST'))
@@ -95,6 +111,13 @@ def authorize():
 @bp.route('/oauth/token', methods=['POST'])
 def issue_token():
     return authorization.create_token_response()
+
+
+@bp.route('/oauth/userinfo')
+@require_oauth('profile')
+def userinfo():
+    user = current_token.user
+    return jsonify(generate_user_info(current_token.user, current_token.scope))
 
 
 @bp.route('/api/me')

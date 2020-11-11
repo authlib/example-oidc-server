@@ -1,0 +1,29 @@
+<style>
+    label, label > span { display: block; }
+    label { margin: 15px 0; }
+</style>
+
+<a href="/">Home</a>
+<h2>Edit User</h2>
+
+<form action="" method="post">
+    <label>
+        <span>Id</span>
+        <span>{{user.id}}</span>
+      </label>
+    <label>
+        <span>Username</span>
+        <span>{{user.username}}</span>
+    </label>
+
+    <label>
+        <span>Name</span>
+        <input type="text" name="name" value="{{user.name if user.name}}">
+    </label>
+
+    <label>
+        <span>Email</span>
+        <input type="text" name="email" value="{{user.email if user.email}}">
+    </label>
+    <button>Submit</button>
+</form>

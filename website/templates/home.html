@@ -1,6 +1,6 @@
 {% if user %}
   <style>pre{white-space:wrap}</style>
-<div>Logged in as <strong>{{user}}</strong></div>
+<div>Logged in as <a href="/edit_user"><strong>{{user}}</strong></a></div>
 
 {% for client in clients %}
 <pre>
