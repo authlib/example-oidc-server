@@ -73,6 +73,37 @@ def create_client():
     return redirect('/')
 
 
+@bp.route('/edit_client/<client_id>', methods=('GET', 'POST'))
+def edit_client(client_id=None):
+    user = current_user()
+    if not user:
+        return redirect('/')
+    client = OAuth2Client.query.filter_by(client_id=client_id).first()
+
+    if request.method == 'GET':
+        return render_template('edit_client.html', client_id=client_id, client=client)
+
+
+    form = request.form
+    client_metadata = {
+        "client_name": form["client_name"],
+        "client_uri": form["client_uri"],
+        "grant_types": split_by_crlf(form["grant_type"]),
+        "redirect_uris": split_by_crlf(form["redirect_uri"]),
+        "response_types": split_by_crlf(form["response_type"]),
+        "scope": form["scope"],
+        "token_endpoint_auth_method": form["token_endpoint_auth_method"]
+    }
+    client.set_client_metadata(client_metadata)
+
+    if form['token_endpoint_auth_method'] == 'none':
+        client.client_secret = ''
+    elif client.client_secret == '':
+        client.client_secret = gen_salt(48)
+    db.session.commit()
+    return redirect('/')
+
+
 @bp.route('/oauth/authorize', methods=['GET', 'POST'])
 def authorize():
     user = current_user()

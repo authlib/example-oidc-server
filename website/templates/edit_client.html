@@ -1,0 +1,52 @@
+<style>
+    label, label > span { display: block; }
+    label { margin: 15px 0; }
+  </style>
+  
+  <a href="/">Home</a>
+  <h2>Edit Client</h2>
+  <form action="" method="post">
+    <label>
+      <span>Client Id</span>
+      <span>{{client.client_info['client_id']}}</span>
+    </label>
+    <label>
+      <span>Client Secret</span>
+      <span>{{client.client_info['client_secret']}}</span>
+    </label>
+    <label>
+      <span>Client Name</span>
+      <input type="text" name="client_name" value="{{client.client_metadata['client_name']}}">
+    </label>
+    <label>
+      <span>Client URI</span>
+      <input type="url" name="client_uri" value="{{client.client_metadata['client_uri']}}">
+    </label>
+    <label>
+      <span>Allowed Scope</span>
+      <input type="text" name="scope" value="{{client.client_metadata['scope']}}">
+    </label>
+    <label>
+      <span>Redirect URIs</span>
+      <textarea name="redirect_uri" cols="80" rows="10">{% for line in client.client_metadata['redirect_uris'] %}{{line}}{{"\n"}}{%endfor%}</textarea>
+    </label>
+    <label>
+      <span>Allowed Grant Types</span>
+      <textarea name="grant_type" cols="80" rows="10">{% for line in client.client_metadata['grant_types'] %}{{line}}{{"\n"}}{%endfor%}</textarea>
+    </label>
+    <label>
+      <span>Allowed Response Types</span>
+      <textarea name="response_type" cols="30" rows="10">{% for line in client.client_metadata['response_types'] %}{{line}}{{"\n"}}{%endfor%}</textarea>
+    </label>
+    <label>
+      <span>Token Endpoint Auth Method</span>
+      {% set method = client.client_metadata['token_endpoint_auth_method'] %}
+      <select name="token_endpoint_auth_method">
+        {% for o in ['client_secret_basic', 'client_secret_post', 'none'] %}
+        <option value="{{o}}" {% if (o == method) %} selected="selected" {% endif %} >{{o}}</option>
+        {%endfor%}
+      </select>
+    </label>
+    <button>Submit</button>
+  </form>
+  
