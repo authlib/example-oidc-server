@@ -34,7 +34,16 @@ def exists_nonce(nonce, req):
 
 
 def generate_user_info(user, scope):
-    return UserInfo(sub=str(user.id), name=user.username)
+    claims = scope.split(' ')
+    extra = dict()
+    for claim in claims:
+        if hasattr(user, claim):
+            extra[claim] = getattr(user, claim)
+        if claim=='preferred_username' and hasattr(user, 'username'):
+            extra[claim] = getattr(user, 'username')
+    if not 'name' in extra:
+        extra['name'] = user.username
+    return UserInfo(sub=str(user.id), preferred_username=user.username, **extra)
 
 
 def create_authorization_code(client, grant_user, request):
