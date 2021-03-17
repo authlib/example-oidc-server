@@ -122,7 +122,7 @@ def config_oauth(app):
 
     # support all openid grants
     authorization.register_grant(AuthorizationCodeGrant, [
-        OpenIDCode(require_nonce=True),
+        OpenIDCode(require_nonce=app.config['REQUIRE_NONCE']),
     ])
     authorization.register_grant(ImplicitGrant)
     authorization.register_grant(HybridGrant)
