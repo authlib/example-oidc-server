@@ -4,9 +4,10 @@
 
 {% for client in clients %}
 <pre>
-{{ client.client_info|tojson }}
-{{ client.client_metadata|tojson }}
+{{ client.client_info|tojson(indent=4) }}
+{{ client.client_metadata|tojson(indent=4) }}
 </pre>
+<a href="/edit_client/{{client.client_info['client_id']}}">[edit]</a>
 <hr>
 {% endfor %}
 
