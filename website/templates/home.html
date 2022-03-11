@@ -14,7 +14,9 @@
 
 {% else %}
 <form action="" method="post">
-  <input type="text" name="username" placeholder="username">
-  <button type="submit">Login / Signup</button>
+  <input type="email" name="username" placeholder="email">
+  <button type="submit">Login</button>
 </form>
+
+<br><a href="{{ url_for('.signup') }}">Signup</a>
 {% endif %}

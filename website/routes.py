@@ -8,7 +8,7 @@ from .models import db, User, OAuth2Client
 from .oauth2 import authorization, require_oauth, generate_user_info
 
 
-bp = Blueprint(__name__, 'home')
+bp = Blueprint('home', __name__)
 
 
 def current_user():
@@ -18,23 +18,63 @@ def current_user():
     return None
 
 
+@bp.route('/signup', methods=('GET', 'POST'))
+def signup():
+
+    if request.method == 'GET':
+        return render_template('signup.html')
+
+    username = request.form.get('username')
+    first_name = request.form.get('first_name')
+    last_name = request.form.get('last_name')
+
+    # Create user
+    user = User(username=username, first_name=first_name, last_name=last_name)
+    db.session.add(user)
+    db.session.commit()
+
+    session['id'] = user.id
+
+    return redirect('/')
+
 @bp.route('/', methods=('GET', 'POST'))
 def home():
     if request.method == 'POST':
         username = request.form.get('username')
         user = User.query.filter_by(username=username).first()
         if not user:
-            user = User(username=username)
-            db.session.add(user)
-            db.session.commit()
+            return redirect('/signup')
         session['id'] = user.id
+        # # if user is not just to log in, but need to head back to the auth page, then go for it
+        # next_page = request.args.get('next')
+        # if next_page:
+        #     return redirect(next_page)
         return redirect('/')
     user = current_user()
     if user:
         clients = OAuth2Client.query.filter_by(user_id=user.id).all()
     else:
         clients = []
+
     return render_template('home.html', user=user, clients=clients)
+
+# @bp.route('/', methods=('GET', 'POST'))
+# def home():
+#     if request.method == 'POST':
+#         username = request.form.get('username')
+#         user = User.query.filter_by(username=username).first()
+#         if not user:
+#             user = User(username=username)
+#             db.session.add(user)
+#             db.session.commit()
+#         session['id'] = user.id
+#         return redirect('/')
+#     user = current_user()
+#     if user:
+#         clients = OAuth2Client.query.filter_by(user_id=user.id).all()
+#     else:
+#         clients = []
+#     return render_template('home.html', user=user, clients=clients)
 
 
 def split_by_crlf(s):
