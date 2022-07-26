@@ -17,14 +17,9 @@ from authlib.oidc.core import UserInfo
 from werkzeug.security import gen_salt
 from .models import db, User
 from .models import OAuth2Client, OAuth2AuthorizationCode, OAuth2Token
+from flask import current_app
 
 
-DUMMY_JWT_CONFIG = {
-    'key': 'secret-key',
-    'alg': 'HS256',
-    'iss': 'https://authlib.org',
-    'exp': 3600,
-}
 
 def exists_nonce(nonce, req):
     exists = OAuth2AuthorizationCode.query.filter_by(
@@ -33,31 +28,41 @@ def exists_nonce(nonce, req):
     return bool(exists)
 
 
+def get_jwt_config():
+    if current_app.config.get('OAUTH2_JWT_ENABLED',False) \
+    and 'OAUTH2_JWT_KEY' not in current_app.config:
+        raise NotImplementedError('"OAUTH2_JWT_KEY" missing from settings')
+    return {
+        'key': current_app.config.get('OAUTH2_JWT_KEY'),
+        'alg': current_app.config.get('OAUTH2_JWT_ALG', 'HS256'),
+        'iss': current_app.config.get('OAUTH2_JWT_ISS', 'https://authlib.org'),
+        'exp': current_app.config.get('OAUTH2_JWT_EXP', 3600),
+    }
+
+
 def generate_user_info(user, scope):
     return UserInfo(sub=str(user.id), name=user.username)
 
 
-def create_authorization_code(client, grant_user, request):
-    code = gen_salt(48)
-    nonce = request.data.get('nonce')
-    item = OAuth2AuthorizationCode(
+def save_authorization_code(code, request):
+    auth_code = OAuth2AuthorizationCode(
         code=code,
-        client_id=client.client_id,
+        client_id=request.client.client_id,
         redirect_uri=request.redirect_uri,
         scope=request.scope,
-        user_id=grant_user.id,
-        nonce=nonce,
+        user_id=request.user.id,
+        nonce=request.data.get('nonce'), # MAY have nonce
     )
-    db.session.add(item)
+    db.session.add(auth_code)
     db.session.commit()
-    return code
+    return auth_code
 
 
 class AuthorizationCodeGrant(_AuthorizationCodeGrant):
-    def create_authorization_code(self, client, grant_user, request):
-        return create_authorization_code(client, grant_user, request)
+    def save_authorization_code(self, code, request):
+        return save_authorization_code(code, request)
 
-    def parse_authorization_code(self, code, client):
+    def query_authorization_code(self, code, client):
         item = OAuth2AuthorizationCode.query.filter_by(
             code=code, client_id=client.client_id).first()
         if item and not item.is_expired():
@@ -76,7 +81,7 @@ class OpenIDCode(_OpenIDCode):
         return exists_nonce(nonce, request)
 
     def get_jwt_config(self, grant):
-        return DUMMY_JWT_CONFIG
+        return get_jwt_config()
 
     def generate_user_info(self, user, scope):
         return generate_user_info(user, scope)
@@ -87,21 +92,21 @@ class ImplicitGrant(_OpenIDImplicitGrant):
         return exists_nonce(nonce, request)
 
     def get_jwt_config(self, grant):
-        return DUMMY_JWT_CONFIG
+        return get_jwt_config()
 
     def generate_user_info(self, user, scope):
         return generate_user_info(user, scope)
 
 
 class HybridGrant(_OpenIDHybridGrant):
-    def create_authorization_code(self, client, grant_user, request):
-        return create_authorization_code(client, grant_user, request)
+    def save_authorization_code(self, code, request):
+        return save_authorization_code(code, request)
 
     def exists_nonce(self, nonce, request):
         return exists_nonce(nonce, request)
 
     def get_jwt_config(self):
-        return DUMMY_JWT_CONFIG
+        return get_jwt_config()
 
     def generate_user_info(self, user, scope):
         return generate_user_info(user, scope)
