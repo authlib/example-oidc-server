@@ -8,7 +8,7 @@ from .models import db, User, OAuth2Client
 from .oauth2 import authorization, require_oauth, generate_user_info
 
 
-bp = Blueprint(__name__, 'home')
+bp = Blueprint('bp', __name__)
 
 
 def current_user():
