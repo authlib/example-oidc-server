@@ -76,18 +76,33 @@ def create_client():
 @bp.route('/oauth/authorize', methods=['GET', 'POST'])
 def authorize():
     user = current_user()
+    # TODO Login is required since we need to know the current resource owner.
+    # It can be done with a redirection to the login page, or a login
+    # form on this authorization page.
     if request.method == 'GET':
         try:
-            grant = authorization.validate_consent_request(end_user=user)
+            grant = authorization.get_consent_grant(end_user=user)
+            client = grant.client
+            scope = client.get_allowed_scope(grant.request.scope)
+
+            # You may add a function to extract scope into a list of scopes
+            # with rich information, e.g.
+            # scopes = describe_scope(scope)  # returns [{'key': 'email', 'icon': '...'}]
         except OAuth2Error as error:
             return jsonify(dict(error.get_body()))
-        return render_template('authorize.html', user=user, grant=grant)
+        return render_template(
+                'authorize.html',
+                user=user,
+                grant=grant
+            ) # can add client and scopes here
     if not user and 'username' in request.form:
         username = request.form.get('username')
         user = User.query.filter_by(username=username).first()
     if request.form['confirm']:
+        # granted by resource owner
         grant_user = user
     else:
+        # denied by resource owner
         grant_user = None
     return authorization.create_authorization_response(grant_user=grant_user)
 
@@ -98,6 +113,6 @@ def issue_token():
 
 
 @bp.route('/oauth/userinfo')
-@require_oauth('profile')
+@require_oauth('openid profile')
 def api_me():
     return jsonify(generate_user_info(current_token.user, current_token.scope))
