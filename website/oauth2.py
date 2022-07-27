@@ -33,7 +33,7 @@ def get_jwt_config():
     and 'OAUTH2_JWT_KEY' not in current_app.config:
         raise NotImplementedError('"OAUTH2_JWT_KEY" missing from settings')
     return {
-        'key': current_app.config.get('OAUTH2_JWT_KEY'),
+        'key': current_app.config.get('OAUTH2_JWT_KEY', 'secret-key'),
         'alg': current_app.config.get('OAUTH2_JWT_ALG', 'HS256'),
         'iss': current_app.config.get('OAUTH2_JWT_ISS', 'https://authlib.org'),
         'exp': current_app.config.get('OAUTH2_JWT_EXP', 3600),
