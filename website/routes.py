@@ -8,7 +8,7 @@ from .models import db, User, OAuth2Client
 from .oauth2 import authorization, require_oauth, generate_user_info
 
 
-bp = Blueprint(__name__, 'home')
+bp = Blueprint('home', __name__)
 
 
 def current_user():
@@ -78,7 +78,7 @@ def authorize():
     user = current_user()
     if request.method == 'GET':
         try:
-            grant = authorization.validate_consent_request(end_user=user)
+            grant = authorization.get_consent_grant(end_user=user)
         except OAuth2Error as error:
             return jsonify(dict(error.get_body()))
         return render_template('authorize.html', user=user, grant=grant)

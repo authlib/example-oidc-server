@@ -26,9 +26,9 @@ DUMMY_JWT_CONFIG = {
     'exp': 3600,
 }
 
-def exists_nonce(nonce, req):
+def exists_nonce(nonce, request):
     exists = OAuth2AuthorizationCode.query.filter_by(
-        client_id=req.client_id, nonce=nonce
+        client_id=request.payload.client_id, nonce=nonce
     ).first()
     return bool(exists)
 
@@ -37,27 +37,25 @@ def generate_user_info(user, scope):
     return UserInfo(sub=str(user.id), name=user.username)
 
 
-def create_authorization_code(client, grant_user, request):
-    code = gen_salt(48)
-    nonce = request.data.get('nonce')
+def save_authorization_code(code, request):
+    nonce = request.payload.data.get('nonce')
     item = OAuth2AuthorizationCode(
         code=code,
-        client_id=client.client_id,
-        redirect_uri=request.redirect_uri,
-        scope=request.scope,
-        user_id=grant_user.id,
+        client_id=request.client.client_id,
+        redirect_uri=request.payload.redirect_uri,
+        scope=request.payload.scope,
+        user_id=request.user.id,
         nonce=nonce,
     )
     db.session.add(item)
     db.session.commit()
-    return code
 
 
 class AuthorizationCodeGrant(_AuthorizationCodeGrant):
-    def create_authorization_code(self, client, grant_user, request):
-        return create_authorization_code(client, grant_user, request)
+    def save_authorization_code(self, code, request):
+        return save_authorization_code(code, request)
 
-    def parse_authorization_code(self, code, client):
+    def query_authorization_code(self, code, client):
         item = OAuth2AuthorizationCode.query.filter_by(
             code=code, client_id=client.client_id).first()
         if item and not item.is_expired():
@@ -75,7 +73,7 @@ class OpenIDCode(_OpenIDCode):
     def exists_nonce(self, nonce, request):
         return exists_nonce(nonce, request)
 
-    def get_jwt_config(self, grant):
+    def get_jwt_config(self, grant, client):
         return DUMMY_JWT_CONFIG
 
     def generate_user_info(self, user, scope):
@@ -86,7 +84,7 @@ class ImplicitGrant(_OpenIDImplicitGrant):
     def exists_nonce(self, nonce, request):
         return exists_nonce(nonce, request)
 
-    def get_jwt_config(self, grant):
+    def get_jwt_config(self, client):
         return DUMMY_JWT_CONFIG
 
     def generate_user_info(self, user, scope):
@@ -94,13 +92,13 @@ class ImplicitGrant(_OpenIDImplicitGrant):
 
 
 class HybridGrant(_OpenIDHybridGrant):
-    def create_authorization_code(self, client, grant_user, request):
-        return create_authorization_code(client, grant_user, request)
+    def save_authorization_code(self, code, request):
+        return save_authorization_code(code, request)
 
     def exists_nonce(self, nonce, request):
         return exists_nonce(nonce, request)
 
-    def get_jwt_config(self):
+    def get_jwt_config(self, client):
         return DUMMY_JWT_CONFIG
 
     def generate_user_info(self, user, scope):
